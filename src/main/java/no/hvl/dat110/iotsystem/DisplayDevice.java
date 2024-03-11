@@ -7,52 +7,37 @@ import no.hvl.dat110.common.TODO;
 
 public class DisplayDevice {
 
-	private static final int COUNT = 10;
+	public static void main(String[] args) {
+		Client display = new Client("display", Common.BROKERHOST, Common.BROKERPORT);
+		int COUNT = 10; // Adjust based on how many messages you expect to receive
 
-	public static void main (String[] args) {
+		try {
+			display.connect();
+			display.createTopic(Common.TEMPTOPIC);
+			display.subscribe(Common.TEMPTOPIC);
 
-		System.out.println("Display starting ...");
-		// create a client object and use it to
-		// - connect to the broker - use "display" as the username
-		// - create the temperature topic on the broker
-		// - subscribe to the topic
-		// - receive messages on the topic
-		// - unsubscribe from the topic
-		// - disconnect from the broker
+			for (int i = 0; i < COUNT; i++) {
+				Message message = display.receive();  // Receive the Message object
 
-		// setup display
-		String user = "display";
-		String broker = Common.BROKERHOST;
-		int port = Common.BROKERPORT;
+				if (message != null) {
+					// Extract the string content from the Message object
+					String content = message.toString(); // Replace toString() with the actual method to get the message content
+					System.out.println("Temperature received: " + content);
+				} else {
+					System.out.println("Received null message");
+				}
+			}
 
-		//Client object
-		Client displayClient = new Client(user, broker, port);
+			display.unsubscribe(Common.TEMPTOPIC);
+			display.disconnect();
 
-		//Connect to broker
-		displayClient.connect();
-
-		//Create and sub to temp topic
-		String topic = Common.TEMPTOPIC;
-		displayClient.createTopic(topic);
-		displayClient.subscribe(topic);
-
-		//Recieve message
-		for (int i = 0; i < COUNT; i++) {
-			String message = displayClient.receive().toString();
-			System.out.println("Recieved temperature: " + message);
+		} catch (Exception e) {
+			System.err.println("Error in DisplayDevice: " + e.getMessage());
+			e.printStackTrace();
+		} finally {
+			if (display.isAlive()) {
+				display.disconnect();
+			}
 		}
-		//Unsub
-		displayClient.unsubscribe(topic);
-
-		//Disconnect
-		displayClient.disconnect();
-
-
-		// TODO - END
-
-		System.out.println("Display stopping ... ");
-
-		throw new UnsupportedOperationException(TODO.method());
-
 	}
 }
